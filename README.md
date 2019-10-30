@@ -178,88 +178,63 @@ promise2 = promise1.then(onFulfilled, onRejected);
 - 2.2.7.3 如果onFulfilled不是一个方法，并且promise1已经完成（fulfilled）, promise2必须使用与promise1相同的值来完成（fulfiled）
 - 2.2.7.4 如果onRejected不是一个方法，并且promise1已经被拒绝（rejected）, promise2必须使用与promise1相同的原因来拒绝（rejected）
 
-首先我们先把resolve和rejected完善一下
 
-```
-    function resolve(value) {
-        if (value instanceof MyPromise) {
-            return value.then(resolve, reject)
-        }
-        setTimeout(() => {
-            if (that.state === PENDING) {
-                that.state = RESOLVED
-                that.value = value
-                that.resolvedCallbacks.map(cb => cb(that.value))
-            }
-        }, 0)
-    }
-    function reject(value) {
-        setTimeout(() => {
-            if (that.state === PENDING) {
-                that.state = REJECTED
-                that.value = value
-                that.rejectedCallbacks.map(cb => cb(that.value))
-            }
-        }, 0)
-    }
-```
-
-参考2.2.2和2.2.3
-- 对于 resolve 函数来说，首先需要判断传入的值是否为 Promise 类型
-- 为了保证函数执行顺序，需要将两个函数体代码使用 setTimeout 包裹起来
 
 接下来根据规范需求继续完善then函数里的代码：
 
 ```
-    if (that.state === PENDING) {
-    
-        return (promise2 = new MyPromise((resolve, reject) => {
-            that.resolvedCallbacks.push(() => {
-                try {
-                    const x = onFulfilled(that.value);
-                    resoluteProcedure(promise2, x, resolve, reject)
-                } catch (r) {
-                    reject(r);
-                }
-            });
-            that.rejectedCallbacks.push(() => {
-                try {
-                    const x = onRejected(that.value);
-                    resoluteProcedure(promise2, x, resolve, reject)
-                } catch {
-                    reject(r)
-                }
+        if (that.status === 'PENDING') {
+            promise2 = new Promise(function (resolve, reject) {
+                that.resolvedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onFulfilled(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
+                that.rejectedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onRejected(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
             })
-        }));
-        that.reolvedCallbacks.push(onFulfilled);
-        that.rejectedCallbacks.push(onRejeted);
-    }
-    if (that.state === RESOLVED) {
-        return (promise2 = new MyPromise((resolve, reject) => {
-            setTimeout(() => {
-                try {
-                    const x = onFulfilled(that.value)
-                    resolutionProcedure(promise2, x, resolve, reject)
-                } catch (reason) {
-                    reject(reason)
-                }
+        }
+        if (that.status === 'RESOLVED') {
+            promise2 = new Promise(function (resolve, reject) {
+                setTimeout(function () {                          //用setTimeOut实现异步
+                    try {
+                        let x = onFulfilled(that.value);        //x可能是普通值 也可能是一个promise, 还可能是别人的promise                               
+                        resolutionProcedure(promise2, x, resolve, reject)  //写一个方法统一处理 
+                    } catch (e) {
+                        reject(e);
+                    }
+
+                })
             })
-        }))
-    }
-    if (that.state === REJECTED) {
-        return (promise2 = new MyPromise((resolve, reject) => {
-            setTimeout(() => {
-                try {
-                    const x = onRejected(that.value)
-                    resolutionProcedure(promise2, x, resolve, reject)
-                } catch (reason) {
-                    reject(reason)
-                }
+        }
+        if (that.status === 'REJECTED') {
+            promise2 = new Promise(function (resolve, reject) {
+                setTimeout(function () {
+                    try {
+                        let x = onRejected(that.value);
+                        resolutionProcedure(promise2, x, resolve, reject)
+                    } catch (e) {
+                        reject(e);
+                    }
+                })
             })
-        }))
-    }
+        }
 ```
 
+- 为了保证函数执行顺序，需要使用setTimeout 包裹函数
 - 首先我们返回了一个新的 Promise 对象，并在 Promise 中传入了一个函数
 - 函数的基本逻辑还是和之前一样，往回调数组中 push 函数
 - 同样，在执行函数的过程中可能会遇到错误，所以使用了 try...catch 包裹
@@ -413,18 +388,14 @@ promises-aplus-tests promise.js
             if (that.status === 'PENDING') {
                 that.status = 'RESOLVED';
                 that.value = value;
-                that.resolvedCallbacks.forEach(function (fn) {
-                    fn();
-                })
+                that.resolvedCallbacks.map(cb => cb(that.value));
             }
         }
         function reject(value) {
             if (that.status === 'PENDING') {
                 that.status = 'REJECTED';
                 that.value = value;
-                that.rejectedCallbacks.forEach(function (fn) {
-                    fn();
-                })
+                that.rejectedCallbacks.map(cb => cb(that.value));
             }
         }
         try {
@@ -481,6 +452,30 @@ promises-aplus-tests promise.js
         }
         let that = this;
         let promise2;  //新增: 返回的promise
+        if (that.status === 'PENDING') {
+            promise2 = new Promise(function (resolve, reject) {
+                that.resolvedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onFulfilled(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
+                that.rejectedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onRejected(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
+            })
+        }
         if (that.status === 'RESOLVED') {
             promise2 = new Promise(function (resolve, reject) {
                 setTimeout(function () {                          //用setTimeOut实现异步
@@ -507,30 +502,6 @@ promises-aplus-tests promise.js
             })
         }
 
-        if (that.status === 'PENDING') {
-            promise2 = new Promise(function (resolve, reject) {
-                that.resolvedCallbacks.push(function () {
-                    setTimeout(function () {
-                        try {
-                            let x = onFulfilled(that.value);
-                            resolutionProcedure(promise2, x, resolve, reject)
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })
-                });
-                that.rejectedCallbacks.push(function () {
-                    setTimeout(function () {
-                        try {
-                            let x = onRejected(that.value);
-                            resolutionProcedure(promise2, x, resolve, reject)
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })
-                });
-            })
-        }
         return promise2;
     }
     Promise.defer = Promise.deferred = function () {

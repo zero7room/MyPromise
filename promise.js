@@ -11,18 +11,14 @@
             if (that.status === 'PENDING') {
                 that.status = 'RESOLVED';
                 that.value = value;
-                that.resolvedCallbacks.forEach(function (fn) {
-                    fn();
-                })
+                that.resolvedCallbacks.map(cb => cb(that.value));
             }
         }
         function reject(value) {
             if (that.status === 'PENDING') {
                 that.status = 'REJECTED';
                 that.value = value;
-                that.rejectedCallbacks.forEach(function (fn) {
-                    fn();
-                })
+                that.rejectedCallbacks.map(cb => cb(that.value));
             }
         }
         try {
