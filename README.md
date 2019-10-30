@@ -1,6 +1,8 @@
 
 # Promise/A+ 规范，源码分析
 
+![Promise/A+](https://github.com/zero7room/MyPromise/blob/master/img/promiseA.jpg)   
+
 Promise是前端大厂面试的一道常考题，掌握Promise用法及其相关原理，对你的面试一定有很大帮助。这篇文章主要讲解Promise源码实现，如果你还没有掌握Promise的功能和API，推荐你先去学习一下Promise的概念和使用API，学习知识就要脚踏实地，先把基础搞好才能深刻理解源码的实现。  
 这里推荐阮一峰老师的文章  
 
@@ -392,7 +394,8 @@ promises-aplus-tests promise.js
 
 ```
 
-共有872条测试用例，可以完美通过
+共有872条测试用例，可以完美通过   
+![测试通过](https://github.com/zero7room/MyPromise/blob/master/img/promise_test.jpg)
 
 
 
