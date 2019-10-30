@@ -562,6 +562,7 @@ promises-aplus-tests promise.js
 
 这里就不一一介绍啦，大家可以参考阮一峰老师的文章 [ES6入门-Promise对象](http://es6.ruanyifeng.com/#docs/promise)  
 这篇文章给大家讲解的Promise/A+规范的源码，希望大家能多读多写，深刻的体会一下源码的思想，对以后的开发也很有帮助。  
-感谢大家的阅读，觉得还不错，辛苦点一下关注，谢谢！
-
+感谢大家的阅读，觉得还不错，辛苦点一下star，以后还不不断更新高质量内容。 
+非常感谢！
+![搬砖皮卡丘](https://github.com/zero7room/MyPromise/blob/master/img/pk.jpg)   
 
