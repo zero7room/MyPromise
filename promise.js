@@ -32,7 +32,7 @@
         }
     }
 
-    function resolvePromise(promise2, x, resolve, reject) {
+    function resolutionProcedure(promise2, x, resolve, reject) {
         //有可能这里返回的x是别人的promise 要尽可能允许其他人乱写 
         if (promise2 === x) {//这里应该报一个循环引用的类型错误
             return reject(new TypeError('循环引用'));
@@ -48,7 +48,7 @@
                     then.call(x, function (y) {
                         if (called) return        //避免别人写的promise中既走resolve又走reject的情况
                         called = true;
-                        resolvePromise(promise2, y, resolve, reject)
+                        resolutionProcedure(promise2, y, resolve, reject)
                     }, function (err) {
                         if (called) return
                         called = true;
@@ -84,7 +84,7 @@
                 setTimeout(function () {                          //用setTimeOut实现异步
                     try {
                         let x = onFulfilled(that.value);        //x可能是普通值 也可能是一个promise, 还可能是别人的promise                               
-                        resolvePromise(promise2, x, resolve, reject)  //写一个方法统一处理 
+                        resolutionProcedure(promise2, x, resolve, reject)  //写一个方法统一处理 
                     } catch (e) {
                         reject(e);
                     }
@@ -97,7 +97,7 @@
                 setTimeout(function () {
                     try {
                         let x = onRejected(that.value);
-                        resolvePromise(promise2, x, resolve, reject)
+                        resolutionProcedure(promise2, x, resolve, reject)
                     } catch (e) {
                         reject(e);
                     }
@@ -111,7 +111,7 @@
                     setTimeout(function () {
                         try {
                             let x = onFulfilled(that.value);
-                            resolvePromise(promise2, x, resolve, reject)
+                            resolutionProcedure(promise2, x, resolve, reject)
                         } catch (e) {
                             reject(e);
                         }
@@ -121,7 +121,7 @@
                     setTimeout(function () {
                         try {
                             let x = onRejected(that.value);
-                            resolvePromise(promise2, x, resolve, reject)
+                            resolutionProcedure(promise2, x, resolve, reject)
                         } catch (e) {
                             reject(e);
                         }

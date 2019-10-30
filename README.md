@@ -1,8 +1,6 @@
 
 # Promise/A+ 规范，源码分析
 
-![Promise/A+](https://github.com/zero7room/MyPromise/blob/master/img/promiseA.jpg)   
-
 Promise是前端大厂面试的一道常考题，掌握Promise用法及其相关原理，对你的面试一定有很大帮助。这篇文章主要讲解Promise源码实现，如果你还没有掌握Promise的功能和API，推荐你先去学习一下Promise的概念和使用API，学习知识就要脚踏实地，先把基础搞好才能深刻理解源码的实现。  
 这里推荐阮一峰老师的文章  
 
@@ -266,7 +264,7 @@ promise2 = promise1.then(onFulfilled, onRejected);
 - 同样，在执行函数的过程中可能会遇到错误，所以使用了 try...catch 包裹
 - 规范规定，执行 onFulfilled 或者 onRejected 函数时会返回一个 x，并且执行 Promise 解决过程，这是为了不同的 Promise 都可以兼容使用，比如 JQuery 的 Promise 能兼容 ES6 的 Promise
 
-
+### Promise/A+ 【2.3】
 #### 2.3 Promise解决程序
 ##### 2.3.1 如果promise和x引用同一个对象，则用TypeError作为原因拒绝（reject）promise。
 ##### 2.3.2 如果x是一个promise,采用promise的状态
@@ -365,7 +363,7 @@ promise2 = promise1.then(onFulfilled, onRejected);
 - 如果 then 是函数类型的话，就将 x 作为函数的作用域 this 调用之，并且传递两个回调函数作为参数，第一个参数叫做 resolvePromise ，第二个参数叫做 rejectPromise，两个回调函数都需要判断是否已经执行过函数，然后进行相应的逻辑   
 - 以上代码在执行的过程中如果抛错了，将错误传入 reject 函数中
 
-#### 测试Promise
+### 测试Promise
 
 有专门的测试脚本可以测试所编写的代码是否符合PromiseA+的规范
 首先，在promise实现的代码中，增加以下代码:   
@@ -394,11 +392,10 @@ promises-aplus-tests promise.js
 
 ```
 
-共有872条测试用例，可以完美通过   
-![测试通过](https://github.com/zero7room/MyPromise/blob/master/img/promise_test.jpg)
+共有872条测试用例，可以完美通过
 
 
-
+### 符合Promise/A+规范完整代码
 这样我们就完成了符合Promise/A+规范的源码，下面是整个代码：
 
 ```
@@ -436,7 +433,7 @@ promises-aplus-tests promise.js
         }
     }
 
-    function resolvePromise(promise2, x, resolve, reject) {
+    function resolutionProcedure(promise2, x, resolve, reject) {
         //有可能这里返回的x是别人的promise 要尽可能允许其他人乱写 
         if (promise2 === x) {//这里应该报一个循环引用的类型错误
             return reject(new TypeError('循环引用'));
@@ -452,7 +449,7 @@ promises-aplus-tests promise.js
                     then.call(x, function (y) {
                         if (called) return        //避免别人写的promise中既走resolve又走reject的情况
                         called = true;
-                        resolvePromise(promise2, y, resolve, reject)
+                        resolutionProcedure(promise2, y, resolve, reject)
                     }, function (err) {
                         if (called) return
                         called = true;
@@ -488,7 +485,7 @@ promises-aplus-tests promise.js
                 setTimeout(function () {                          //用setTimeOut实现异步
                     try {
                         let x = onFulfilled(that.value);        //x可能是普通值 也可能是一个promise, 还可能是别人的promise                               
-                        resolvePromise(promise2, x, resolve, reject)  //写一个方法统一处理 
+                        resolutionProcedure(promise2, x, resolve, reject)  //写一个方法统一处理 
                     } catch (e) {
                         reject(e);
                     }
@@ -501,7 +498,7 @@ promises-aplus-tests promise.js
                 setTimeout(function () {
                     try {
                         let x = onRejected(that.value);
-                        resolvePromise(promise2, x, resolve, reject)
+                        resolutionProcedure(promise2, x, resolve, reject)
                     } catch (e) {
                         reject(e);
                     }
@@ -515,7 +512,7 @@ promises-aplus-tests promise.js
                     setTimeout(function () {
                         try {
                             let x = onFulfilled(that.value);
-                            resolvePromise(promise2, x, resolve, reject)
+                            resolutionProcedure(promise2, x, resolve, reject)
                         } catch (e) {
                             reject(e);
                         }
@@ -525,7 +522,7 @@ promises-aplus-tests promise.js
                     setTimeout(function () {
                         try {
                             let x = onRejected(that.value);
-                            resolvePromise(promise2, x, resolve, reject)
+                            resolutionProcedure(promise2, x, resolve, reject)
                         } catch (e) {
                             reject(e);
                         }
@@ -535,7 +532,6 @@ promises-aplus-tests promise.js
         }
         return promise2;
     }
-    // 测试用例需要
     Promise.defer = Promise.deferred = function () {
         let dfd = {};
         dfd.promise = new Promise((resolve, reject) => {
@@ -544,7 +540,6 @@ promises-aplus-tests promise.js
         });
         return dfd;
     }
-    // 模块化导出Promise
     module.exports = Promise;
 ```
 
@@ -559,6 +554,7 @@ promises-aplus-tests promise.js
 - Promise.reject()
 - Promise.try()
 
+### 总结
 
 这里就不一一介绍啦，大家可以参考阮一峰老师的文章 [ES6入门-Promise对象](http://es6.ruanyifeng.com/#docs/promise)  
 这篇文章给大家讲解的Promise/A+规范的源码，希望大家能多读多写，深刻的体会一下源码的思想，对以后的开发也很有帮助。  
