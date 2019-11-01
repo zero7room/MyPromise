@@ -385,6 +385,9 @@ promises-aplus-tests promise.js
         that.resolvedCallbacks = [];
         that.rejectedCallbacks = [];
         function resolve(value) {
+            if (value instanceof Promise) {
+                return value.then(resolve, reject)
+            }
             if (that.status === 'PENDING') {
                 that.status = 'RESOLVED';
                 that.value = value;

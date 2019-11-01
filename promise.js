@@ -8,6 +8,9 @@
         that.resolvedCallbacks = [];
         that.rejectedCallbacks = [];
         function resolve(value) {
+            if (value instanceof Promise) {
+                return value.then(resolve, reject)
+            }
             if (that.status === 'PENDING') {
                 that.status = 'RESOLVED';
                 that.value = value;
@@ -75,6 +78,30 @@
         }
         let that = this;
         let promise2;  //新增: 返回的promise
+        if (that.status === 'PENDING') {
+            promise2 = new Promise(function (resolve, reject) {
+                that.resolvedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onFulfilled(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
+                that.rejectedCallbacks.push(function () {
+                    setTimeout(function () {
+                        try {
+                            let x = onRejected(that.value);
+                            resolutionProcedure(promise2, x, resolve, reject)
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })
+                });
+            })
+        }
         if (that.status === 'RESOLVED') {
             promise2 = new Promise(function (resolve, reject) {
                 setTimeout(function () {                          //用setTimeOut实现异步
@@ -101,30 +128,6 @@
             })
         }
 
-        if (that.status === 'PENDING') {
-            promise2 = new Promise(function (resolve, reject) {
-                that.resolvedCallbacks.push(function () {
-                    setTimeout(function () {
-                        try {
-                            let x = onFulfilled(that.value);
-                            resolutionProcedure(promise2, x, resolve, reject)
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })
-                });
-                that.rejectedCallbacks.push(function () {
-                    setTimeout(function () {
-                        try {
-                            let x = onRejected(that.value);
-                            resolutionProcedure(promise2, x, resolve, reject)
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })
-                });
-            })
-        }
         return promise2;
     }
     Promise.defer = Promise.deferred = function () {
